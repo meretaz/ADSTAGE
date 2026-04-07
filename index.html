@@ -1,558 +1,305 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Auto-efficacité et abstraction dirigée</title>
-  <style>
-    :root {
-      --bg-1: #f5f7ff;
-      --bg-2: #eef7f2;
-      --card: rgba(255, 255, 255, 0.88);
-      --card-border: rgba(102, 119, 190, 0.14);
-      --text: #223048;
-      --muted: #5e6b80;
-      --accent: #6b7cff;
-      --accent-2: #8dd3a8;
-      --shadow: 0 24px 60px rgba(36, 54, 96, 0.14);
-      --radius: 28px;
-      --radius-sm: 18px;
-      --max-width: 760px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      margin: 0;
-      min-height: 100%;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(107, 124, 255, 0.16), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(141, 211, 168, 0.2), transparent 34%),
-        linear-gradient(135deg, var(--bg-1), var(--bg-2));
-    }
-
-    body {
-      display: grid;
-      place-items: center;
-      padding: 24px;
-    }
-
-    .app-shell {
-      width: 100%;
-      max-width: var(--max-width);
-    }
-
-    .card {
-      backdrop-filter: blur(14px);
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 34px 30px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(120deg, rgba(255,255,255,0.35), transparent 45%),
-        radial-gradient(circle at top right, rgba(107,124,255,0.08), transparent 22%);
-      pointer-events: none;
-    }
-
-    .content {
-      position: relative;
-      z-index: 1;
-    }
-
-    h1 {
-      margin: 0 0 14px;
-      font-size: clamp(2rem, 4vw, 2.7rem);
-      line-height: 1.08;
-    }
-
-    h2 {
-      margin: 0 0 14px;
-      font-size: clamp(1.6rem, 3vw, 2.1rem);
-      line-height: 1.15;
-    }
-
-    p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1.02rem;
-      line-height: 1.7;
-    }
-
-    .stack {
-      display: grid;
-      gap: 24px;
-    }
-
-    .progress-wrap {
-      display: grid;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .progress-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.95rem;
-      color: var(--muted);
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 12px;
-      border-radius: 999px;
-      background: rgba(96, 111, 146, 0.12);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      width: 0%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      transition: width 0.35s ease;
-    }
-
-    .field-block {
-      display: grid;
-      gap: 14px;
-      margin-top: 8px;
-    }
-
-    label {
-      font-weight: 700;
-      font-size: 1rem;
-      line-height: 1.5;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 150px;
-      resize: vertical;
-      border: 1px solid rgba(89, 105, 146, 0.18);
-      border-radius: var(--radius-sm);
-      padding: 16px 18px;
-      font: inherit;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.92);
-      outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-    }
-
-    textarea:focus {
-      border-color: rgba(107, 124, 255, 0.55);
-      box-shadow: 0 0 0 4px rgba(107, 124, 255, 0.12);
-      transform: translateY(-1px);
-    }
-
-    .slider-shell {
-      margin-top: 10px;
-      padding: 22px 20px 18px;
-      border-radius: 22px;
-      background: rgba(107, 124, 255, 0.05);
-      border: 1px solid rgba(107, 124, 255, 0.1);
-    }
-
-    .slider-value {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 92px;
-      height: 92px;
-      margin: 0 auto 18px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(107,124,255,0.15), rgba(141,211,168,0.22));
-      color: var(--text);
-      font-size: 2rem;
-      font-weight: 800;
-      box-shadow: inset 0 1px 1px rgba(255,255,255,0.7);
-    }
-
-    .range-wrap {
-      display: grid;
-      gap: 12px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      appearance: none;
-      background: transparent;
-      cursor: pointer;
-    }
-
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(107,124,255,0.25), rgba(141,211,168,0.3));
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      appearance: none;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), #90a0ff);
-      margin-top: -7px;
-      border: 3px solid white;
-      box-shadow: 0 8px 18px rgba(76, 92, 200, 0.28);
-    }
-
-    input[type="range"]::-moz-range-track {
-      height: 10px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(107,124,255,0.25), rgba(141,211,168,0.3));
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), #90a0ff);
-      border: 3px solid white;
-      box-shadow: 0 8px 18px rgba(76, 92, 200, 0.28);
-    }
-
-    .slider-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.92rem;
-      color: var(--muted);
-    }
-
-    .button-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    .btn {
-      appearance: none;
-      border: 0;
-      border-radius: 999px;
-      padding: 14px 22px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary {
-      color: white;
-      background: linear-gradient(135deg, var(--accent), #8c82ff);
-      box-shadow: 0 14px 28px rgba(90, 103, 219, 0.26);
-    }
-
-    .btn-secondary {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.82);
-      border: 1px solid rgba(89, 105, 146, 0.14);
-    }
-
-    .quote-box {
-      padding: 18px;
-      border-radius: 20px;
-      background: rgba(107, 124, 255, 0.06);
-      border: 1px solid rgba(107, 124, 255, 0.14);
-      color: var(--text);
-      font-weight: 700;
-      line-height: 1.7;
-    }
-
-    .screen {
-      display: none;
-      animation: fadeIn 0.35s ease;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @media (max-width: 640px) {
-      body {
-        padding: 16px;
-      }
-
-      .card {
-        padding: 24px 20px;
-        border-radius: 24px;
-      }
-
-      .slider-value {
-        width: 82px;
-        height: 82px;
-      }
-
-      .button-row {
-        flex-direction: column-reverse;
-        align-items: stretch;
-      }
-
-      .btn {
-        width: 100%;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilan de formation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Minimalist, distraction-free styling aligned with clinical protocols */
+        body {
+            background-color: #fafafa;
+            color: #1a202c;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .screen {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .screen.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        textarea {
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4a5568;
+            box-shadow: 0 0 0 1px #4a5568;
+        }
+        .svg-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+        }
+        /* Minimalist Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #1a202c;
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 0 0 4px #edf2f7;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+        input[type="range"]:focus {
+            outline: none;
+        }
+    </style>
 </head>
 <body>
-  <main class="app-shell">
-    <section class="card">
-      <div class="content">
-        <div class="progress-wrap">
-          <div class="progress-bar" aria-hidden="true">
-            <div class="progress-fill" id="progressFill"></div>
-          </div>
+
+    <div class="w-full max-w-2xl bg-white p-8 md:p-12 rounded-lg shadow-sm border border-gray-100">
+        
+        <!-- Progress Bar (Minimalist) -->
+        <div class="w-full h-1.5 bg-gray-100 rounded-full mb-10 overflow-hidden">
+            <div id="progressFill" class="h-full bg-gray-900 transition-all duration-300 w-0"></div>
         </div>
 
-        <div class="stack" style="margin-top: 24px;">
-          <section class="screen active" id="screen-intro">
-            <h1>Comment vous sentez-vous pour la suite&nbsp;?</h1>
-
-            <div class="field-block">
-              <label for="selfEfficacyRange">
+        <!-- Screen 1: Intro / Self-Efficacy -->
+        <div id="screen-intro" class="screen active text-left">
+            <h1 class="text-3xl font-bold mb-4 tracking-tight">Comment vous sentez-vous pour la suite ?</h1>
+            <p class="text-gray-600 mb-8 font-medium">
                 Sur une échelle de 1 à 10, à combien pensez-vous que vous pouvez appliquer ce que vous avez appris dans cette formation ?
-              </label>
-
-              <div class="slider-shell">
-                <div class="slider-value" id="sliderValue">7</div>
-                <div class="range-wrap">
-                  <input
-                    id="selfEfficacyRange"
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    value="7"
-                    aria-describedby="sliderHelp"
-                  />
-                  <div class="slider-labels" id="sliderHelp">
+            </p>
+            
+            <div class="mb-10 p-6 bg-gray-50 border border-gray-100 rounded text-center">
+                <div id="sliderValue" class="text-4xl font-bold text-gray-900 mb-6">7</div>
+                <input id="selfEfficacyRange" type="range" min="1" max="10" step="1" value="7" class="w-full mb-4">
+                <div class="flex justify-between text-sm font-medium text-gray-500">
                     <span>1</span>
                     <span>10</span>
-                  </div>
                 </div>
-              </div>
             </div>
 
-            <div class="button-row">
-              <button class="btn btn-primary" id="startFlowBtn">Continuer</button>
-            </div>
-          </section>
+            <button id="startFlowBtn" class="bg-gray-900 text-white px-6 py-3 rounded hover:bg-gray-800 transition font-medium">
+                Continuer
+            </button>
+        </div>
 
-          <section class="screen" id="screen-difficulty">
-            <h2>Identifier ce qui semble difficile</h2>
-
-            <div class="field-block">
-              <label for="difficultyInput">
+        <!-- Screen 2: Difficulty -->
+        <div id="screen-difficulty" class="screen text-left">
+            <h2 class="text-2xl font-bold mb-6">Identifier ce qui semble difficile</h2>
+            <p class="text-gray-800 font-medium mb-4">
                 Quel aspect de la formation est, selon vous, le plus difficile à mettre en place ?
-              </label>
-              <textarea
-                id="difficultyInput"
-                placeholder="Écrivez ici votre réponse"
-              ></textarea>
+            </p>
+            
+            <textarea id="difficultyInput" class="w-full bg-gray-50 border border-gray-200 rounded p-4 text-lg mb-6 h-32" placeholder="Écrivez ici votre réponse..."></textarea>
+            
+            <div class="flex gap-4">
+                <button data-back="screen-intro" class="bg-gray-200 text-gray-800 px-6 py-3 rounded hover:bg-gray-300 transition font-medium">
+                    Retour
+                </button>
+                <button id="toMemoryBtn" class="bg-gray-900 text-white px-6 py-3 rounded hover:bg-gray-800 transition font-medium">
+                    Continuer
+                </button>
             </div>
+        </div>
 
-            <div class="button-row">
-              <button class="btn btn-secondary" data-back="screen-intro">Retour</button>
-              <button class="btn btn-primary" id="toMemoryBtn">Continuer</button>
+        <!-- Screen 3: Memory -->
+        <div id="screen-memory" class="screen text-left">
+            <h2 class="text-2xl font-bold mb-6">Rappel d’une réussite</h2>
+            
+            <textarea id="memoryInput" class="w-full bg-gray-50 border border-gray-200 rounded p-4 text-lg mb-6 h-32" placeholder="Écrivez ici votre réponse..."></textarea>
+            
+            <div class="flex gap-4">
+                <button data-back="screen-difficulty" class="bg-gray-200 text-gray-800 px-6 py-3 rounded hover:bg-gray-300 transition font-medium">
+                    Retour
+                </button>
+                <button id="toAbstractionBtn" class="bg-gray-900 text-white px-6 py-3 rounded hover:bg-gray-800 transition font-medium">
+                    Continuer
+                </button>
             </div>
-          </section>
+        </div>
 
-          <section class="screen" id="screen-memory">
-            <h2>Rappel d’une réussite</h2>
-
-            <div class="field-block">
-              <textarea
-                id="memoryInput"
-                placeholder="Écrivez ici votre réponse"
-              ></textarea>
-            </div>
-
-            <div class="button-row">
-              <button class="btn btn-secondary" data-back="screen-difficulty">Retour</button>
-              <button class="btn btn-primary" id="toAbstractionBtn">Continuer</button>
-            </div>
-          </section>
-
-          <section class="screen" id="screen-abstraction">
-            <h2>Transformer la réussite en ressource personnelle</h2>
-            <p>
-              Recopiez puis complétez la phrase ci-dessous. La consigne est importante.
-              Ne complétez pas avec ce que vous avez mis en place ou avec une action précise.
-              Complétez avec une qualité personnelle qui vous a permis de réussir cette tâche similaire.
+        <!-- Screen 4: Abstraction -->
+        <div id="screen-abstraction" class="screen text-left">
+            <h2 class="text-2xl font-bold mb-4">Transformer la réussite en ressource personnelle</h2>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                Recopiez puis complétez la phrase ci-dessous. La consigne est importante. Ne complétez pas avec ce que vous avez mis en place ou avec une action précise. Complétez avec une qualité personnelle qui vous a permis de réussir cette tâche similaire.
             </p>
 
-            <div class="quote-box">
-              « J'ai déjà réussi une tâche similaire parce que je suis »
+            <div class="border-l-4 border-gray-400 bg-gray-50 p-4 mb-6 text-gray-800 font-medium italic">
+                « J'ai déjà réussi une tâche similaire parce que je suis »
             </div>
-
-            <div class="field-block">
-              <label for="abstractionInput">
-                Recopiez et complétez la phrase avec une qualité personnelle.
-              </label>
-              <textarea id="abstractionInput" placeholder="Recopiez puis complétez la phrase ici"></textarea>
+            
+            <p class="text-gray-800 font-medium mb-3">Recopiez et complétez la phrase avec une qualité personnelle :</p>
+            <textarea id="abstractionInput" class="w-full bg-gray-50 border border-gray-200 rounded p-4 text-lg mb-6 h-24" placeholder="Recopiez puis complétez la phrase ici..."></textarea>
+            
+            <div class="flex gap-4">
+                <button data-back="screen-memory" class="bg-gray-200 text-gray-800 px-6 py-3 rounded hover:bg-gray-300 transition font-medium">
+                    Retour
+                </button>
+                <button id="finishExerciseBtn" class="bg-gray-900 text-white px-6 py-3 rounded hover:bg-gray-800 transition font-medium">
+                    Terminer
+                </button>
             </div>
-
-            <div class="button-row">
-              <button class="btn btn-secondary" data-back="screen-memory">Retour</button>
-              <button class="btn btn-primary" id="finishExerciseBtn">Terminer</button>
-            </div>
-          </section>
-
-          <section class="screen" id="screen-thanks-high">
-            <h2>Merci pour votre implication dans cette formation</h2>
-
-            <div class="button-row">
-              <button class="btn btn-primary" id="restartHighBtn">Recommencer</button>
-            </div>
-          </section>
-
-          <section class="screen" id="screen-thanks-low">
-            <h2>Merci d’avoir pris le temps de faire cet exercice</h2>
-
-            <div class="button-row">
-              <button class="btn btn-primary" id="restartLowBtn">Recommencer</button>
-            </div>
-          </section>
         </div>
-      </div>
-    </section>
-  </main>
 
-  <script>
-    const screens = {
-      intro: document.getElementById('screen-intro'),
-      difficulty: document.getElementById('screen-difficulty'),
-      memory: document.getElementById('screen-memory'),
-      abstraction: document.getElementById('screen-abstraction'),
-      thanksHigh: document.getElementById('screen-thanks-high'),
-      thanksLow: document.getElementById('screen-thanks-low')
-    }
+        <!-- Screen 5: Thanks High Efficacy -->
+        <div id="screen-thanks-high" class="screen text-left">
+            <h2 class="text-2xl font-bold mb-8">Merci pour votre implication dans cette formation</h2>
+            
+            <button id="restartHighBtn" class="bg-gray-200 text-gray-800 px-6 py-3 rounded hover:bg-gray-300 transition font-medium">
+                Recommencer
+            </button>
+        </div>
 
-    const screenOrder = ['screen-intro', 'screen-difficulty', 'screen-memory', 'screen-abstraction']
-    const progressFill = document.getElementById('progressFill')
-    const slider = document.getElementById('selfEfficacyRange')
-    const sliderValue = document.getElementById('sliderValue')
-    const difficultyInput = document.getElementById('difficultyInput')
-    const memoryInput = document.getElementById('memoryInput')
-    const abstractionInput = document.getElementById('abstractionInput')
+        <!-- Screen 6: Thanks Low Efficacy (After exercise) -->
+        <div id="screen-thanks-low" class="screen text-left">
+            <h2 class="text-2xl font-bold mb-8">Merci d’avoir pris le temps de faire cet exercice</h2>
+            
+            <button id="restartLowBtn" class="bg-gray-200 text-gray-800 px-6 py-3 rounded hover:bg-gray-300 transition font-medium">
+                Recommencer
+            </button>
+        </div>
 
-    function showScreen(id) {
-      Object.values(screens).forEach(screen => screen.classList.remove('active'))
-      document.getElementById(id).classList.add('active')
-      updateProgress(id)
-    }
+    </div>
 
-    function updateProgress(id) {
-      if (id === 'screen-thanks-high' || id === 'screen-thanks-low') {
-        progressFill.style.width = '100%'
-        return
-      }
+    <script>
+        const screens = {
+            intro: document.getElementById('screen-intro'),
+            difficulty: document.getElementById('screen-difficulty'),
+            memory: document.getElementById('screen-memory'),
+            abstraction: document.getElementById('screen-abstraction'),
+            thanksHigh: document.getElementById('screen-thanks-high'),
+            thanksLow: document.getElementById('screen-thanks-low')
+        };
 
-      const index = screenOrder.indexOf(id)
-      const stepNumber = index + 1
-      const percentage = (stepNumber / screenOrder.length) * 100
-      progressFill.style.width = `${percentage}%`
-    }
+        const screenOrder = ['screen-intro', 'screen-difficulty', 'screen-memory', 'screen-abstraction'];
+        const progressFill = document.getElementById('progressFill');
+        const slider = document.getElementById('selfEfficacyRange');
+        const sliderValue = document.getElementById('sliderValue');
+        const difficultyInput = document.getElementById('difficultyInput');
+        const memoryInput = document.getElementById('memoryInput');
+        const abstractionInput = document.getElementById('abstractionInput');
 
-    function refreshSliderValue() {
+        function showScreen(id) {
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            const targetScreen = document.getElementById(id);
+            if(targetScreen) {
+                targetScreen.classList.add('active');
+                
+                // Auto-focus logic for textareas
+                const textarea = targetScreen.querySelector('textarea');
+                if (textarea) {
+                    setTimeout(() => textarea.focus(), 50);
+                }
+            }
+            updateProgress(id);
+        }
 
-      sliderValue.textContent = slider.value
-    }
+        function updateProgress(id) {
+            if (id === 'screen-thanks-high' || id === 'screen-thanks-low') {
+                progressFill.style.width = '100%';
+                return;
+            }
+            const index = screenOrder.indexOf(id);
+            const stepNumber = index + 1;
+            const percentage = (stepNumber / screenOrder.length) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
 
-    function resetFlow() {
-      slider.value = 7
-      refreshSliderValue()
-      difficultyInput.value = ''
-      memoryInput.value = ''
-      abstractionInput.value = ''
-      showScreen('screen-intro')
-    }
+        function refreshSliderValue() {
+            sliderValue.textContent = slider.value;
+        }
 
-    slider.addEventListener('input', refreshSliderValue)
+        function resetFlow() {
+            slider.value = 7;
+            refreshSliderValue();
+            difficultyInput.value = '';
+            memoryInput.value = '';
+            abstractionInput.value = '';
+            // Reset borders just in case
+            difficultyInput.style.borderColor = '';
+            memoryInput.style.borderColor = '';
+            abstractionInput.style.borderColor = '';
+            showScreen('screen-intro');
+        }
 
-    document.getElementById('startFlowBtn').addEventListener('click', () => {
-      const score = Number(slider.value)
+        slider.addEventListener('input', refreshSliderValue);
 
-      if (score >= 7) {
-        showScreen('screen-thanks-high')
-      } else {
-        showScreen('screen-difficulty')
-      }
-    })
+        // Input validation helper
+        function validateInput(inputElement) {
+            if (!inputElement.value.trim()) {
+                inputElement.style.borderColor = '#e53e3e';
+                setTimeout(() => inputElement.style.borderColor = '', 1000);
+                inputElement.focus();
+                return false;
+            }
+            return true;
+        }
 
-    document.getElementById('toMemoryBtn').addEventListener('click', () => {
-      if (!difficultyInput.value.trim()) {
-        difficultyInput.focus()
-        return
-      }
+        document.getElementById('startFlowBtn').addEventListener('click', () => {
+            const score = Number(slider.value);
+            if (score >= 7) {
+                showScreen('screen-thanks-high');
+            } else {
+                showScreen('screen-difficulty');
+            }
+        });
 
-      showScreen('screen-memory')
-    })
+        document.getElementById('toMemoryBtn').addEventListener('click', () => {
+            if (validateInput(difficultyInput)) showScreen('screen-memory');
+        });
 
-    document.getElementById('toAbstractionBtn').addEventListener('click', () => {
-      if (!memoryInput.value.trim()) {
-        memoryInput.focus()
-        return
-      }
+        document.getElementById('toAbstractionBtn').addEventListener('click', () => {
+            if (validateInput(memoryInput)) showScreen('screen-abstraction');
+        });
 
-      showScreen('screen-abstraction')
-    })
+        document.getElementById('finishExerciseBtn').addEventListener('click', () => {
+            if (validateInput(abstractionInput)) showScreen('screen-thanks-low');
+        });
 
-    document.getElementById('finishExerciseBtn').addEventListener('click', () => {
-      if (!abstractionInput.value.trim()) {
-        abstractionInput.focus()
-        return
-      }
+        document.querySelectorAll('[data-back]').forEach(button => {
+            button.addEventListener('click', event => {
+                showScreen(event.currentTarget.getAttribute('data-back'));
+            });
+        });
 
-      showScreen('screen-thanks-low')
-    })
+        document.getElementById('restartHighBtn').addEventListener('click', resetFlow);
+        document.getElementById('restartLowBtn').addEventListener('click', resetFlow);
 
-    document.querySelectorAll('[data-back]').forEach(button => {
-      button.addEventListener('click', event => {
-        showScreen(event.currentTarget.getAttribute('data-back'))
-      })
-    })
+        // Keyboard navigation (Enter key)
+        document.querySelectorAll('textarea').forEach(el => {
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (this.id === 'difficultyInput') document.getElementById('toMemoryBtn').click();
+                    if (this.id === 'memoryInput') document.getElementById('toAbstractionBtn').click();
+                    if (this.id === 'abstractionInput') document.getElementById('finishExerciseBtn').click();
+                }
+            });
+        });
 
-    document.getElementById('restartHighBtn').addEventListener('click', resetFlow)
-    document.getElementById('restartLowBtn').addEventListener('click', resetFlow)
-
-    refreshSliderValue()
-    updateProgress('screen-intro')
-  </script>
+        // Init
+        refreshSliderValue();
+        updateProgress('screen-intro');
+    </script>
 </body>
 </html>
